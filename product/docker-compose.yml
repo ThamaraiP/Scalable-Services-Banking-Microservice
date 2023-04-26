@@ -1,0 +1,41 @@
+version: '3.3'
+
+networks:
+  product:
+    driver: bridge
+    name: productnetwork
+
+services:
+
+  ### MySQL Container
+  mysql:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        - MYSQL_DATABASE=${MYSQL_DATABASE}
+        - MYSQL_USER=${MYSQL_USER}
+        - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    container_name: product-mysql
+    ports:
+      - 3306:3306
+    restart: always
+    networks:
+      - product
+
+  product:
+    image: product
+    build:
+      context: ./
+      dockerfile: Dockerfile-product
+    container_name: product-app
+    environment:
+      SERVICE_PRECONDITION: "product-mysql:3306"
+    ports:
+      - 8687:8687
+    depends_on:
+      - mysql
+    restart: on-failure
+    networks:
+      - product
